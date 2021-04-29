@@ -13,9 +13,7 @@ namespace miniPaint
 {
     public partial class Form1 : Form
     {
-        Graphics g;
 
-        //drawingBoard = new DrawingBoard();
         private bool canMove = false;
 
         List<Shape> shapes;
@@ -41,18 +39,13 @@ namespace miniPaint
         public Form1()
         {
             InitializeComponent();
-
-            //drawingBoard.Paint += new PaintEventHandler(drawingBoard_Paint);
             this.shapes = new List<Shape>();
 
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            g = drawingBoard.CreateGraphics();
-            drawingBoard.Paint += new PaintEventHandler(drawingBoard_Paint);
-
-            drawingBoard.Invalidate();
+           
 
         }
 
@@ -68,7 +61,8 @@ namespace miniPaint
 
         private void drawingBoard_Paint(object sender, PaintEventArgs e)
         {
-           // base.OnPaint(e);
+            //base.OnPaint(e);
+            Graphics g = e.Graphics;
 
             foreach (var shape in this.shapes)
             {
@@ -91,23 +85,14 @@ namespace miniPaint
         }
         private void panel1_Paint(object sender, PaintEventArgs e)
         {
-
-            //Graphics g = e.Graphics;
-            /*    Pen p = new Pen(Brushes.Black, 4);
-                p.DashStyle = System.Drawing.Drawing2D.DashStyle.DashDot;
-                g.DrawLine(p, 0, 0, 200, 200);
-
-                Shape c = new Circle();
-                c.rect = new Rectangle(200,200,100,100);
-                c.brush = Brushes.Black;
-                c.draw(g,true);*/
     
 
         }
 
         private void Form1_Paint(object sender, PaintEventArgs e)
         {
-            this.Invalidate();
+            Graphics g = e.Graphics;
+            drawingBoard.Paint += new PaintEventHandler(drawingBoard_Paint);
 
         }
 
@@ -135,19 +120,11 @@ namespace miniPaint
                     currentShape = new Line();
                 }
 
-                //      currentShape.pen = new Pen(penColor, penSize);
-                //     currentShape.pen.DashStyle = penStyle;
-                //    currentShape.start = e.Location;
                 this.Invalidate();
             }
             else if (activeShape != null)
             {
-                /*moveStart = e.Location;
-                deltaX = e.X - activeShape.start.X;
-                deltaY = e.Y - activeShape.start.Y;*/
                 canMove = true;
-                // delta = new Point(e.X - activeShape.rect.X, e.Y - activeShape.rect.Y);
-
             }
             start = e.Location;
 
@@ -202,26 +179,32 @@ namespace miniPaint
         private void drawingBoard_MouseMove(object sender, MouseEventArgs e)
         {
              
-           if (activeShape != null && canMove ) /// fix later for Line resize
+           if (activeShape != null && canMove ) 
             {
-                if (activeShape.Top.Contains(start) && !selectedShape.Equals("Line"))
+                if (activeShape.Top.Contains(start))
                 {
+                    activeShape.Start.Y -= start.Y - e.Y;
+
                     activeShape.rect.Y -= start.Y - e.Y  ;
                     activeShape.rect.Height +=   start.Y- e.Y;
                     start = new Point(e.X, e.Y); 
-                }else if (activeShape.Right.Contains(start) && !selectedShape.Equals("Line"))
+                }else if (activeShape.Right.Contains(start))
                 {
+                    activeShape.End.X += e.X - start.X;
                     activeShape.rect.Width += e.X -start.X  ;
                     start = new Point(e.X, e.Y);
-                }else if (activeShape.Left.Contains(start) && !selectedShape.Equals("Line"))
+                }else if (activeShape.Left.Contains(start))
                 {
+                    activeShape.Start.X += e.X - start.X;
 
-                   activeShape.rect.X +=  e.X- start.X;
+                    activeShape.rect.X +=  e.X- start.X;
                    activeShape.rect.Width -=  e.X - start.X;
                    start = new Point(e.X, e.Y);
                 }
-                else if (activeShape.Down.Contains(start) && !selectedShape.Equals("Line"))
+                else if (activeShape.Down.Contains(start))
                 {
+                    activeShape.End.Y += e.Y - start.Y;
+
                     activeShape.rect.Height +=  e.Y - start.Y;
                     start = new Point(e.X, e.Y);
                 }
@@ -348,16 +331,15 @@ namespace miniPaint
         public System.Drawing.Rectangle Down;
         public Brush brush;
         public Pen pen;
-        public int selectOffset = 15;
+        public int selectOffset = 10;
+        public int DotW = 8;
+        public int DotH = 8;
         public Point Start;
         public Point End;
 
         public abstract void draw(Graphics g, bool isActive = false);
         public bool IsInside(Point p)
         {
-
-            //int width = Math.Abs(this.end.X - this.start.X);
-           // int height = Math.Abs(this.end.Y - this.start.Y);
             return (p.X >= rect.X &&
                 p.X <= (rect.X + rect.Width) &&
                 p.Y >= rect.Y &&
@@ -381,9 +363,7 @@ namespace miniPaint
                 Rectangle selectRect = new Rectangle(rect.X -selectOffset, rect.Y - selectOffset, rect.Width+ (2*selectOffset), rect.Height+ (2*selectOffset));
 
                 g.DrawRectangle(p, selectRect);
-                
-                int DotW = 10;
-                int DotH = 10;
+
 
                 System.Drawing.Rectangle centerDot = new System.Drawing.Rectangle((rect.X +rect.Width/2)- DotW/ 2, rect.Y + (rect.Height/ 2) - DotH/2, DotW, DotH);
 
@@ -423,8 +403,7 @@ namespace miniPaint
 
                 g.DrawRectangle(p, selectRect);
 
-                int DotW = 10;
-                int DotH = 10;
+        
 
                 System.Drawing.Rectangle centerDot = new System.Drawing.Rectangle((rect.X + rect.Width / 2) - DotW / 2, rect.Y + (rect.Height / 2) - DotH / 2, DotW, DotH);
 
@@ -433,7 +412,7 @@ namespace miniPaint
                 this.Top = new Rectangle((selectRect.X - DotW / 2) + selectRect.Width / 2, selectRect.Y - DotH / 2, DotW, DotH);
                 g.FillRectangle(fillBrush, Top); //Top
 
-                this.Left = new Rectangle((selectRect.X - DotW / 2), (selectRect.Y - DotH / 2) + selectRect.Height / 2, DotW, DotH);
+                this.Left = new Rectangle((selectRect.X -DotW / 2), (selectRect.Y - DotH / 2) + selectRect.Height / 2, DotW, DotH);
                 g.FillRectangle(fillBrush, (selectRect.X - DotW / 2), (selectRect.Y - DotH / 2) + selectRect.Height / 2, DotW, DotH); //Left
 
                 this.Right = new Rectangle((selectRect.X - DotW / 2) + selectRect.Width, (selectRect.Y - DotH / 2) + selectRect.Height / 2, DotW, DotH);
@@ -462,8 +441,7 @@ namespace miniPaint
 
                 g.DrawRectangle(p, selectRect);
 
-                int DotW = 10;
-                int DotH = 10;
+
 
                 System.Drawing.Rectangle centerDot = new System.Drawing.Rectangle((rect.X + rect.Width / 2) - DotW / 2, rect.Y + (rect.Height / 2) - DotH / 2, DotW, DotH);
 
@@ -488,13 +466,8 @@ namespace miniPaint
     {
         public DrawingBoard()
         {
-            
-            /*this.SetStyle(ControlStyles.AllPaintingInWmPaint | //Do not erase the background, reduce flicker
-              ControlStyles.OptimizedDoubleBuffer | //Double buffering
-              ControlStyles.UserPaint, //Use a custom redraw event to reduce flicker
-                        true);*/
-            //this.DoubleBuffered = true;
-            //this.ResizeRedraw = true;
+            this.DoubleBuffered = true;
+            this.ResizeRedraw = true;
         }
     }
 }
